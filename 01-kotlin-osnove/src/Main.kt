@@ -6,9 +6,7 @@ fun main() {
     zadatak5()
 }
 
-fun zadatak1(){
-
-}
+fun zadatak1(){}
 
 fun zadatak2(){}
 
