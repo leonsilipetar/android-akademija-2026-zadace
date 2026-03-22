@@ -20,6 +20,7 @@ fun zadatak1(){
     println("Duljina email adrese: ${email?.length ?: "email nije unesen"}")
 }
 
+
 fun zadatak2(){
     val kod = 2
     val primljenNovac = 1.20
@@ -40,6 +41,7 @@ fun zadatak2(){
         println("Nedovoljno za $odabrano, nedostaje: %.2f".format(nedostaje))
     }
 }
+
 
 fun zadatak3(){
     val koraci = listOf(4500, 12000, 8000, 15000, 3000, 11000, 9500)
@@ -65,6 +67,7 @@ fun zadatak3(){
     if(!pronadjen){ println("Nema dana s više od 10000 koraka") }
 }
 
+
 fun zadatak4(){
     println("Unesite korisničko ime: ")
     var username = readln()
@@ -88,6 +91,7 @@ fun isValid(username: String): Boolean{
     if(username.contains(' ')) return false
     return true
 }
+
 
 fun zadatak5() {
     val racun1 = BankAccount("001")
