@@ -6,6 +6,7 @@ fun main() {
     zadatak5()
 }
 
+
 fun zadatak1(){
     val ime = "Leon"
     val prezime = "Šilipetar"
