@@ -1,5 +1,3 @@
-import sun.security.util.KeyUtil.validate
-
 fun main() {
     zadatak1()
     zadatak2()
