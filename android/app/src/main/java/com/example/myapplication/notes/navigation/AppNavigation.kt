@@ -6,22 +6,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
 import com.example.myapplication.notes.model.Note
-import com.example.myapplication.notes.ui.NoteDetailScreen
-import com.example.myapplication.notes.ui.NoteListScreen
+import com.example.myapplication.notes.repository.NoteRepository
+import com.example.myapplication.notes.ui.detail.NoteDetailScreen
+import com.example.myapplication.notes.ui.list.NoteListScreen
+import com.example.myapplication.notes.viewmodel.EditViewModel
+import com.example.myapplication.notes.viewmodel.ListViewModel
 
 @Composable
 fun AppNavigation() {
 
     val navController = rememberNavController()
 
-    var notes by remember {
-        mutableStateOf(
-            listOf(
-                Note(1, "Note 1", "Opis 1"),
-                Note(2, "Note 2", "Opis 2")
-            )
-        )
-    }
+    val repository by lazy { NoteRepository() }
+
+    val listViewModel = remember { ListViewModel(repository) }
+    val editViewModel = remember { EditViewModel(repository) }
 
     Scaffold { innerPadding ->
 
@@ -33,7 +32,7 @@ fun AppNavigation() {
 
             composable("list") {
                 NoteListScreen(
-                    notes = notes,
+                    notes = listViewModel.notes,
                     onAddClick = {
                         navController.navigate("detail/-1")
                     },
@@ -46,30 +45,19 @@ fun AppNavigation() {
             composable("detail/{id}") { backStackEntry ->
                 val id = backStackEntry.arguments?.getString("id")?.toInt() ?: -1
 
+                LaunchedEffect(id) {
+                    editViewModel.loadNote(id)
+                }
+
                 NoteDetailScreen(
-                    note = notes.find { it.id == id },
+                    viewModel = editViewModel,
 
-                    onSave = { title, description ->
-
-                        if (id == -1) {
-                            val newNote = Note(
-                                id = notes.size + 1,
-                                title = title,
-                                description = description
-                            )
-                            notes = notes + newNote
-                        } else {
-                            notes = notes.map {
-                                if (it.id == id)
-                                    it.copy(title = title, description = description)
-                                else it
-                            }
-                        }
-
+                    onBack = {
                         navController.popBackStack()
                     },
 
-                    onBack = {
+                    onSaveDone = {
+                        listViewModel.loadNotes()
                         navController.popBackStack()
                     }
                 )
