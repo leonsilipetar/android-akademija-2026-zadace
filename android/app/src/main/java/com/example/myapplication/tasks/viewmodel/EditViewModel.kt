@@ -12,16 +12,16 @@ import kotlinx.coroutines.launch
 
 class EditViewModel(
     private val repository: TaskRepository,
-    private val taskId: Int
+    private val taskId: String
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(EditUiState(id = taskId))
+    private val _uiState = MutableStateFlow(EditUiState(id = if (taskId == "-1") null else taskId))
     val uiState = _uiState.asStateFlow()
 
-    fun loadTask(id: Int) {
+    fun loadTask(id: String) {
         Log.d("EditViewModel", "Loading task with id: $id")
-        if (id == -1) {
-            _uiState.value = EditUiState(id = -1, title = "", body = "")
+        if (id == "-1") {
+            _uiState.value = EditUiState(id = null, title = "", body = "")
             return
         }
 
@@ -31,7 +31,10 @@ class EditViewModel(
                 _uiState.value = EditUiState(
                     id = id,
                     title = localTask.title,
-                    body = localTask.body
+                    body = localTask.body,
+                    color = localTask.color,
+                    isCompleted = localTask.isCompleted,
+                    category = localTask.category
                 )
             }
 
@@ -41,7 +44,10 @@ class EditViewModel(
                     _uiState.value = EditUiState(
                         id = id,
                         title = task.title,
-                        body = task.body
+                        body = task.body,
+                        color = task.color,
+                        isCompleted = task.isCompleted,
+                        category = task.category
                     )
                 }
                 .onFailure { error ->
@@ -58,24 +64,41 @@ class EditViewModel(
         _uiState.value = _uiState.value.copy(body = value)
     }
 
+    fun onColorChange(value: String) {
+        _uiState.value = _uiState.value.copy(color = value)
+    }
+
+    fun onCategoryChange(value: String) {
+        _uiState.value = _uiState.value.copy(category = value)
+    }
+
+    fun onCompletionChange(value: Boolean) {
+        _uiState.value = _uiState.value.copy(isCompleted = value)
+    }
+
     fun save(onSuccess: () -> Unit) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             val currentState = _uiState.value
             val request = TaskRequest(currentState.title, currentState.body)
 
-            val result = if (currentState.id == -1) {
-                repository.createTask(request).onSuccess { newId ->
+            val result = if (currentState.id == null) {
+                repository.createTask(request, currentState.color, currentState.category).onSuccess { newId ->
                     _uiState.value = currentState.copy(id = newId, isLoading = false)
                     onSuccess()
                 }
-            } else if (currentState.id != null) {
-                repository.updateTask(currentState.id, currentState.title, currentState.body).onSuccess {
+            } else {
+                repository.updateTask(
+                    id = currentState.id,
+                    title = currentState.title,
+                    body = currentState.body,
+                    color = currentState.color,
+                    isCompleted = currentState.isCompleted,
+                    category = currentState.category
+                ).onSuccess {
                     _uiState.value = currentState.copy(isLoading = false)
                     onSuccess()
                 }
-            } else {
-                Result.failure(Exception("Unknown ID"))
             }
 
             result.onFailure { error ->

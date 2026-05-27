@@ -15,7 +15,10 @@ interface TaskDao {
     suspend fun getAllTasksSync(): List<TaskEntity>
 
     @Query("SELECT * FROM tasks WHERE id = :id")
-    suspend fun getTaskById(id: Int): TaskEntity?
+    suspend fun getTaskById(id: String): TaskEntity?
+
+    @Query("SELECT * FROM tasks WHERE id = :id")
+    fun observeTaskById(id: String): Flow<TaskEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTasks(tasks: List<TaskEntity>)
@@ -24,7 +27,7 @@ interface TaskDao {
     suspend fun insertTask(task: TaskEntity): Long
 
     @Query("DELETE FROM tasks WHERE id = :id")
-    suspend fun deleteTask(id: Int)
+    suspend fun deleteTask(id: String)
 
     @Query("DELETE FROM tasks")
     suspend fun clearAll()

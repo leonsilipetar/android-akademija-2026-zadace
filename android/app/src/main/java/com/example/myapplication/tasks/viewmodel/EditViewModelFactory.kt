@@ -6,7 +6,7 @@ import com.example.myapplication.tasks.repository.TaskRepository
 
 class EditViewModelFactory(
     private val repository: TaskRepository,
-    private val taskId: Int
+    private val taskId: String
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -27,6 +28,7 @@ import com.example.myapplication.tasks.viewmodel.ListViewModel
 import com.example.myapplication.tasks.viewmodel.ListViewModelFactory
 import com.example.myapplication.tasks.viewmodel.LoginViewModel
 import com.example.myapplication.tasks.viewmodel.LoginViewModelFactory
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(
@@ -36,6 +38,11 @@ fun AppNavigation(
     val navController = rememberNavController()
     val tokenState = authRepository.tokenFlow.collectAsState(initial = null)
     val token = tokenState.value
+    
+    val usernameState = authRepository.usernameFlow.collectAsState(initial = null)
+    val username = usernameState.value
+
+    val scope = rememberCoroutineScope()
 
     // Determine start destination based on token presence
     val startDestination = if (token == null) "login" else "list"
@@ -83,28 +90,28 @@ fun AppNavigation(
                         }
                     }
 
-                    is TaskListUiState.Empty -> {
+                    is TaskListUiState.Empty, is TaskListUiState.Success -> {
+                        val tasks = if (uiState is TaskListUiState.Success) uiState.tasks else emptyList()
                         TaskListScreen(
-                            tasks = emptyList(),
+                            tasks = tasks,
+                            username = username,
                             onAddClick = { navController.navigate("detail/-1") },
                             onNoteClick = { id -> navController.navigate("detail/$id") },
                             onDeleteConfirm = { id -> listViewModel.deleteTask(id) },
-                            onRandomPick = { id -> navController.navigate("detail/$id") }
+                            onRandomPick = { id -> navController.navigate("detail/$id") },
+                            onLogout = {
+                                scope.launch {
+                                    authRepository.logout()
+                                    navController.navigate("login") {
+                                        popUpTo("list") { inclusive = true }
+                                    }
+                                }
+                            }
                         )
                     }
 
                     is TaskListUiState.Error -> {
                         Text(uiState.message)
-                    }
-
-                    is TaskListUiState.Success -> {
-                        TaskListScreen(
-                            tasks = uiState.tasks,
-                            onAddClick = { navController.navigate("detail/-1") },
-                            onNoteClick = { id -> navController.navigate("detail/$id") },
-                            onDeleteConfirm = { id -> listViewModel.deleteTask(id) },
-                            onRandomPick = { id -> navController.navigate("detail/$id") }
-                        )
                     }
                 }
             }
@@ -113,7 +120,7 @@ fun AppNavigation(
                 route = "detail/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.StringType })
             ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getString("id")?.toInt() ?: -1
+                val id = backStackEntry.arguments?.getString("id") ?: "-1"
 
                 val editViewModel: EditViewModel = viewModel(
                     factory = EditViewModelFactory(taskRepository, taskId = id)

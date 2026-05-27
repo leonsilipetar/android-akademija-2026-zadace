@@ -5,7 +5,6 @@ import com.example.myapplication.tasks.data.remote.SessionManager
 import com.example.myapplication.tasks.data.remote.api.TaskieApi
 import com.example.myapplication.tasks.data.remote.dto.LoginRequest
 import com.example.myapplication.tasks.data.remote.dto.LoginResponse
-import com.example.myapplication.tasks.data.remote.retrofit.RetrofitProvider
 
 class AuthRepository(
     private val api: TaskieApi,
@@ -13,12 +12,13 @@ class AuthRepository(
 ) {
 
     val tokenFlow = tokenManager.tokenFlow
+    val usernameFlow = tokenManager.usernameFlow
 
     suspend fun login(username: String, password: String): Result<LoginResponse> {
         return try {
             val response = api.login(LoginRequest(username, password))
 
-            tokenManager.saveToken(response.token)
+            tokenManager.saveAuthData(response.token, username)
             SessionManager.token = response.token
 
             Result.success(response)

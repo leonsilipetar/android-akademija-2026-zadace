@@ -5,9 +5,8 @@ import com.example.myapplication.tasks.data.remote.dto.TaskResponse
 import com.example.myapplication.tasks.model.Task
 
 fun TaskResponse.toTask(): Task {
-
     return Task(
-        id = id ?: 0,
+        id = id ?: "",
         username = username,
         title = title,
         body = body
@@ -16,10 +15,13 @@ fun TaskResponse.toTask(): Task {
 
 fun Task.toEntity(): TaskEntity {
     return TaskEntity(
-        id = id,
+        id = id ,
         username = username,
         title = title,
-        body = body
+        body = body,
+        color = color,
+        isCompleted = isCompleted,
+        category = category
     )
 }
 
@@ -28,6 +30,9 @@ fun TaskEntity.toTask(): Task {
         id = id,
         username = username,
         title = title,
-        body = body
+        body = body,
+        color = color,
+        isCompleted = isCompleted,
+        category = category
     )
 }

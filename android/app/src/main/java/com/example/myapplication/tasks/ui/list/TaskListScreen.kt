@@ -1,42 +1,25 @@
 package com.example.myapplication.tasks.ui.list
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Casino
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.tasks.model.Task
@@ -47,17 +30,23 @@ import com.example.myapplication.zadaca.components.TitleText
 @Composable
 fun TaskListScreen(
     tasks: List<Task>,
+    username: String?,
     onAddClick: () -> Unit,
-    onNoteClick: (Int) -> Unit,
-    onDeleteConfirm: (Int) -> Unit,
-    onRandomPick: (Int) -> Unit
+    onNoteClick: (String) -> Unit,
+    onDeleteConfirm: (String) -> Unit,
+    onRandomPick: (String) -> Unit,
+    onLogout: () -> Unit
 ) {
     var query by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("All") }
     var taskToDelete by remember { mutableStateOf<Task?>(null) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    val categories = listOf("All") + tasks.map { it.category }.distinct().sorted()
 
     val filteredItems = tasks.filter {
-        it.title.contains(query, ignoreCase = true) ||
-                it.body.contains(query, ignoreCase = true)
+        (selectedCategory == "All" || it.category == selectedCategory) &&
+        (it.title.contains(query, ignoreCase = true) || it.body.contains(query, ignoreCase = true))
     }
 
     Scaffold(
@@ -84,7 +73,28 @@ fun TaskListScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            TitleText("My Sticky Tasks")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TitleText("MemoBoard")
+                
+                Text(
+                    text = username ?: "Guest",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = { showLogoutDialog = true }
+                            )
+                        }
+                        .padding(8.dp)
+                )
+            }
+            
             Spacer(modifier = Modifier.height(12.dp))
 
             TextField(
@@ -98,6 +108,21 @@ fun TaskListScreen(
                     unfocusedIndicatorColor = Color.Transparent
                 )
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(categories) { category ->
+                    FilterChip(
+                        selected = selectedCategory == category,
+                        onClick = { selectedCategory = category },
+                        label = { Text(category) }
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -144,6 +169,27 @@ fun TaskListScreen(
             }
         )
     }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    onLogout()
+                }) {
+                    Text("Logout", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -153,22 +199,11 @@ fun StickyNoteCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
-    val colors = listOf(
-        Color(0xFFFFF9C4), // Light Yellow
-        Color(0xFFFFECB3), // Light Amber
-        Color(0xFFFFCCBC), // Light Deep Orange
-        Color(0xFFF8BBD0), // Light Pink
-        Color(0xFFE1BEE7), // Light Purple
-        Color(0xFFD1C4E9), // Light Deep Purple
-        Color(0xFFC5CAE9), // Light Indigo
-        Color(0xFFBBDEFB), // Light Blue
-        Color(0xFFB2EBF2), // Light Cyan
-        Color(0xFFB2DFDB), // Light Teal
-        Color(0xFFC8E6C9), // Light Green
-        Color(0xFFDCEDC8)  // Light Lime
-    )
-     val colorIndex = remember(task.id) { java.util.Random(task.id.toLong()).nextInt(colors.size) }
-    val bgColor = colors[colorIndex]
+    val bgColor = try {
+        Color(android.graphics.Color.parseColor(task.color))
+    } catch (e: Exception) {
+        Color(0xFFFFEB3B) // Default Yellow
+    }
 
     Card(
         modifier = Modifier
@@ -184,17 +219,34 @@ fun StickyNoteCard(
         Column(
             modifier = Modifier.padding(12.dp)
         ) {
+            Box(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = task.category,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black.copy(alpha = 0.6f)
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = task.title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                maxLines = 2
+                maxLines = 2,
+                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                color = if (task.isCompleted) Color.Gray else Color.Unspecified
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = task.body,
                 fontSize = 14.sp,
-                maxLines = 6
+                maxLines = 6,
+                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                color = if (task.isCompleted) Color.Gray else Color.Unspecified
             )
         }
     }

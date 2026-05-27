@@ -1,8 +1,10 @@
 package com.example.myapplication.tasks.ui.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -13,10 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.myapplication.R
 import com.example.myapplication.tasks.ui.state.LoginState
 import com.example.myapplication.tasks.viewmodel.LoginViewModel
 import com.example.myapplication.zadaca.components.CustomButton
@@ -31,11 +35,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFFFFEB3B), Color(0xFFFBC02D)) // Yellow gradient
-                )
-            )
+            .background(Color(0xFFF8F9FA))
     ) {
         // Decorative background circles
         Box(
@@ -62,25 +62,29 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // App Icon
-            Icon(
-                imageVector = Icons.Default.Lock,
-                contentDescription = null,
+            Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .padding(bottom = 16.dp),
-                tint = Color.Black
-            )
+                    .size(130.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.app_logo),
+                    contentDescription = "App Logo",
+                    modifier = Modifier.size(100.dp)
+                )
+            }
 
             Text(
-                text = "Sticky Tasks",
+                text = "MemoBoard",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
 
             Text(
-                text = "Keep your thoughts organized",
+                text = "Organise your notes and tasks",
                 fontSize = 16.sp,
                 color = Color.Black.copy(alpha = 0.7f),
                 modifier = Modifier.padding(bottom = 32.dp)

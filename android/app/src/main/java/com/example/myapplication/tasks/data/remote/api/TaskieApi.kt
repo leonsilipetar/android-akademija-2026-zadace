@@ -6,7 +6,6 @@ import com.example.myapplication.tasks.data.remote.dto.LoginRequest
 import com.example.myapplication.tasks.data.remote.dto.LoginResponse
 import com.example.myapplication.tasks.data.remote.dto.TaskRequest
 import com.example.myapplication.tasks.data.remote.dto.TaskResponse
-import com.example.myapplication.tasks.data.remote.dto.UpdateTaskRequest
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -26,7 +25,7 @@ interface TaskieApi {
 
     @GET("tasks/{id}")
     suspend fun getTaskById(
-        @Path("id") id: Int
+        @Path("id") id: String
     ): TaskResponse
 
     @POST("tasks/create")
@@ -36,12 +35,12 @@ interface TaskieApi {
 
     @PUT("tasks/{id}")
     suspend fun updateTask(
-        @Path("id") id: Int,
-        @Body request: UpdateTaskRequest
+        @Path("id") id: String,
+        @Body request: TaskRequest
     )
 
     @DELETE("tasks/{id}")
     suspend fun deleteTask(
-        @Path("id") id: Int
+        @Path("id") id: String
     )
 }

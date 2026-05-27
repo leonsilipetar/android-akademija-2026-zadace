@@ -3,29 +3,17 @@ package com.example.myapplication.tasks.ui.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -39,25 +27,16 @@ fun TaskDetailScreen(
     onSaveDone: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
-    
-    // Deterministic color logic to match TaskListScreen
-    val colors = listOf(
-        Color(0xFFFFF9C4), Color(0xFFFFECB3), Color(0xFFFFCCBC), Color(0xFFF8BBD0),
-        Color(0xFFE1BEE7), Color(0xFFD1C4E9), Color(0xFFC5CAE9), Color(0xFFBBDEFB),
-        Color(0xFFB2EBF2), Color(0xFFB2DFDB), Color(0xFFC8E6C9), Color(0xFFDCEDC8)
-    )
-    
-    val backgroundColor = if (state.id != null && state.id != -1) {
-        val colorIndex = java.util.Random(state.id!!.toLong()).nextInt(colors.size)
-        colors[colorIndex]
-    } else {
+    val backgroundColor = try {
+        Color(android.graphics.Color.parseColor(state.color))
+    } catch (e: Exception) {
         Color.White
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (state.id == -1) "New Task" else "Edit Task") },
+                title = { Text(if (state.id == null) "New Task" else "Edit Task") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = backgroundColor
                 ),
@@ -92,6 +71,21 @@ fun TaskDetailScreen(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Checkbox(
+                    checked = state.isCompleted,
+                    onCheckedChange = viewModel::onCompletionChange
+                )
+                Text(
+                    text = if (state.isCompleted) "Completed" else "Mark as completed",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+
             OutlinedTextField(
                 value = state.title,
                 onValueChange = viewModel::onTitleChange,
@@ -109,6 +103,85 @@ fun TaskDetailScreen(
                     .padding(bottom = 8.dp)
                     .weight(1f),
                 minLines = 5
+            )
+
+            Text("Category", style = MaterialTheme.typography.titleMedium)
+            CategoryPicker(
+                selectedCategory = state.category,
+                onCategorySelected = viewModel::onCategoryChange
+            )
+
+            Text("Stick Note Color", style = MaterialTheme.typography.titleMedium)
+            ColorPicker(
+                selectedColor = state.color,
+                onColorSelected = viewModel::onColorChange
+            )
+        }
+    }
+}
+
+@Composable
+fun CategoryPicker(
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit
+) {
+    val categories = listOf("General", "Work", "Personal", "Urgent")
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        categories.forEach { category ->
+            val isSelected = selectedCategory == category
+            AssistChip(
+                onClick = { onCategorySelected(category) },
+                label = { Text(category) },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = if (isSelected) Color.Black.copy(alpha = 0.1f) else Color.Transparent,
+                    labelColor = if (isSelected) Color.Black else Color.Gray
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun ColorPicker(
+    selectedColor: String,
+    onColorSelected: (String) -> Unit
+) {
+    val colors = listOf(
+        "#FFF9C4", // Light Yellow
+        "#FFECB3", // Light Amber
+        "#FFCCBC", // Light Deep Orange
+        "#F8BBD0", // Light Pink
+        "#E1BEE7", // Light Purple
+        "#D1C4E9", // Light Deep Purple
+        "#C5CAE9", // Light Indigo
+        "#BBDEFB", // Light Blue
+        "#B2EBF2", // Light Cyan
+        "#B2DFDB", // Light Teal
+        "#C8E6C9", // Light Green
+        "#DCEDC8"  // Light Lime
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        colors.take(8).forEach { colorHex ->
+            val color = Color(android.graphics.Color.parseColor(colorHex))
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(color, CircleShape)
+                    .border(
+                        width = if (selectedColor == colorHex) 2.dp else 1.dp,
+                        color = if (selectedColor == colorHex) Color.Black else Color.Gray,
+                        shape = CircleShape
+                    )
+                    .clickable { onColorSelected(colorHex) }
             )
         }
     }

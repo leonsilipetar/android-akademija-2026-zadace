@@ -5,9 +5,12 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "tasks")
 data class TaskEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @PrimaryKey val id: String,
     val username: String?,
     val title: String,
     val body: String,
-    val isSynced: Boolean = true
+    val isSynced: Boolean = true,
+    val color: String = "#FFF9C4",
+    val isCompleted: Boolean = false,
+    val category: String = "General"
 )

@@ -5,7 +5,6 @@ import com.example.myapplication.tasks.data.local.db.TaskEntity
 import com.example.myapplication.tasks.data.mapper.toEntity
 import com.example.myapplication.tasks.data.mapper.toTask
 import com.example.myapplication.tasks.data.remote.dto.TaskRequest
-import com.example.myapplication.tasks.data.remote.dto.UpdateTaskRequest
 import com.example.myapplication.tasks.data.remote.retrofit.RetrofitProvider
 import com.example.myapplication.tasks.model.Task
 import kotlinx.coroutines.CoroutineScope
@@ -34,13 +33,23 @@ class TaskRepository(
             val response = api.getTasks()
             val remoteTasks = response.tasks
             
+            // Fetch local tasks to preserve local-only data
+            val localTasks = taskDao.getAllTasksSync()
+            val localDataMap = localTasks.associateBy { it.id }
+
             val entities = remoteTasks.map { remoteTask ->
+                val serverId = remoteTask.id ?: ""
+                val localTask = localDataMap[serverId]
+                
                 TaskEntity(
-                    id = remoteTask.id ?: 0,
+                    id = serverId,
                     username = remoteTask.username,
                     title = remoteTask.title,
                     body = remoteTask.body,
-                    isSynced = true
+                    isSynced = true,
+                    color = localTask?.color ?: "#FFF9C4",
+                    isCompleted = localTask?.isCompleted ?: false,
+                    category = localTask?.category ?: "General"
                 )
             }
 
@@ -52,7 +61,7 @@ class TaskRepository(
         }
     }
 
-    suspend fun getTaskById(id: Int): Result<Task> {
+    suspend fun getTaskById(id: String): Result<Task> {
         val localTask = taskDao.getTaskById(id)?.toTask()
         if (localTask != null) return Result.success(localTask)
         
@@ -66,7 +75,7 @@ class TaskRepository(
         }
     }
 
-    suspend fun createTask(request: TaskRequest): Result<Int> {
+    suspend fun createTask(request: TaskRequest, color: String, category: String): Result<String> {
         return try {
             val response = api.createTask(request)
             val serverId = response.id
@@ -76,7 +85,9 @@ class TaskRepository(
                 username = null,
                 title = request.title,
                 body = request.body,
-                isSynced = true
+                isSynced = true,
+                color = color,
+                category = category
             )
             taskDao.insertTask(syncedTask)
             Result.success(serverId)
@@ -85,15 +96,30 @@ class TaskRepository(
         }
     }
 
-    suspend fun updateTask(id: Int, title: String, body: String): Result<Unit> {
+    suspend fun updateTask(
+        id: String, 
+        title: String, 
+        body: String, 
+        color: String, 
+        isCompleted: Boolean, 
+        category: String
+    ): Result<Unit> {
         return try {
-            val request = UpdateTaskRequest(
-                id = id.toString(),
+            val request = TaskRequest(
                 title = title,
                 body = body
             )
             api.updateTask(id, request)
-            val task = Task(id, null, title, body)
+            
+            val task = Task(
+                id = id, 
+                username = null, 
+                title = title, 
+                body = body, 
+                color = color, 
+                isCompleted = isCompleted, 
+                category = category
+            )
             taskDao.insertTask(task.toEntity())
             Result.success(Unit)
         } catch (e: Exception) {
@@ -101,7 +127,7 @@ class TaskRepository(
         }
     }
 
-    suspend fun deleteTask(id: Int): Result<Unit> {
+    suspend fun deleteTask(id: String): Result<Unit> {
         return try {
             api.deleteTask(id)
             taskDao.deleteTask(id)

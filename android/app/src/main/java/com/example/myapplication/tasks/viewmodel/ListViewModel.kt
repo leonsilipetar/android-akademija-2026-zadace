@@ -36,7 +36,7 @@ class ListViewModel(
         }
     }
 
-    fun deleteTask(id: Int) {
+    fun deleteTask(id: String) {
         viewModelScope.launch {
             repository.deleteTask(id)
         }
