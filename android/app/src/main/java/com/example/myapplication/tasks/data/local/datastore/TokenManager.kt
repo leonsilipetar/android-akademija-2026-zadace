@@ -16,6 +16,7 @@ class TokenManager(private val context: Context) {
     companion object {
         private val TOKEN_KEY = stringPreferencesKey("token")
         private val USERNAME_KEY = stringPreferencesKey("username")
+        private val BACKGROUND_KEY = stringPreferencesKey("background_id")
     }
 
     val tokenFlow: Flow<String?> = context.dataStore.data
@@ -24,10 +25,19 @@ class TokenManager(private val context: Context) {
     val usernameFlow: Flow<String?> = context.dataStore.data
         .map { prefs -> prefs[USERNAME_KEY] }
 
+    val backgroundIdFlow: Flow<String> = context.dataStore.data
+        .map { prefs -> prefs[BACKGROUND_KEY] ?: "default" }
+
     suspend fun saveAuthData(token: String, username: String) {
         context.dataStore.edit { prefs ->
             prefs[TOKEN_KEY] = token
             prefs[USERNAME_KEY] = username
+        }
+    }
+
+    suspend fun saveBackgroundId(id: String) {
+        context.dataStore.edit { prefs ->
+            prefs[BACKGROUND_KEY] = id
         }
     }
 

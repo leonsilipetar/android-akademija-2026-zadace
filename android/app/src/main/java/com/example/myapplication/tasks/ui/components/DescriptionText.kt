@@ -1,4 +1,4 @@
-package com.example.myapplication.zadaca.components
+package com.example.myapplication.tasks.ui.components
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

@@ -13,6 +13,7 @@ class AuthRepository(
 
     val tokenFlow = tokenManager.tokenFlow
     val usernameFlow = tokenManager.usernameFlow
+    val backgroundIdFlow = tokenManager.backgroundIdFlow
 
     suspend fun login(username: String, password: String): Result<LoginResponse> {
         return try {
@@ -25,6 +26,10 @@ class AuthRepository(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun setBackground(id: String) {
+        tokenManager.saveBackgroundId(id)
     }
 
     suspend fun logout() {

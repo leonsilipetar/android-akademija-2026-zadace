@@ -1,73 +1,96 @@
 package com.example.myapplication.tasks.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.myapplication.tasks.model.Task
-import com.example.myapplication.zadaca.components.DescriptionText
-import com.example.myapplication.zadaca.components.TitleText
 
-import java.text.SimpleDateFormat
-import java.util.*
-
-fun formatDate(timestamp: Long): String {
-
-    val now = Calendar.getInstance()
-    val noteDate = Calendar.getInstance().apply {
-        timeInMillis = timestamp
-    }
-
-    val isToday =
-        now.get(Calendar.YEAR) == noteDate.get(Calendar.YEAR) &&
-                now.get(Calendar.DAY_OF_YEAR) == noteDate.get(Calendar.DAY_OF_YEAR)
-
-    val format = if (isToday) {
-        SimpleDateFormat("HH:mm", Locale.getDefault()) // samo vrijeme
-    } else {
-        SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()) // samo datum
-    }
-
-    return format.format(Date(timestamp))
-}
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TaskCard(data: Task, onClick: () -> Unit = {}) {
+fun TaskCard(
+    data: Task,
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {}
+) {
+    val bgColor = try {
+        Color(android.graphics.Color.parseColor(data.color))
+    } catch (e: Exception) {
+        Color(0xFFFFEB3B)
+    }
+
+    val textDecoration = if (data.isCompleted) TextDecoration.LineThrough else null
+    val mainTextColor = if (data.isCompleted) Color.Gray.copy(alpha = 0.8f) else Color(0xFF1C1B1F)
+    val bodyTextColor = if (data.isCompleted) Color.Gray.copy(alpha = 0.7f) else Color(0xFF49454F)
 
     Card(
         modifier = Modifier
-            .padding(0.dp, 8.dp )
             .fillMaxWidth()
-            .clickable{ onClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            .padding(vertical = 4.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        shape = RoundedCornerShape(4.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (data.isCompleted) 1.dp else 5.dp
+        )
     ) {
-
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(12.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                TitleText(data.title)
+            if (data.category.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .background(Color.Black.copy(alpha = 0.06f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = data.category.uppercase(),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 0.5.sp,
+                        color = Color.Black.copy(alpha = 0.5f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
             }
 
+            Text(
+                text = data.title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textDecoration = textDecoration,
+                color = mainTextColor
+            )
 
-            DescriptionText(data.body)
+            Spacer(modifier = Modifier.height(6.dp))
 
+            Text(
+                text = data.body,
+                fontSize = 14.sp,
+                maxLines = 6,
+                overflow = TextOverflow.Ellipsis,
+                textDecoration = textDecoration,
+                color = bodyTextColor,
+                lineHeight = 18.sp
+            )
         }
     }
 }

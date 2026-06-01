@@ -1,10 +1,12 @@
-package com.example.myapplication.zadaca.components
+package com.example.myapplication.tasks.ui.components
 
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun CustomButton(
@@ -15,9 +17,9 @@ fun CustomButton(
     Button(
         onClick = onClick,
         modifier = modifier,
-        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-            containerColor = androidx.compose.ui.graphics.Color.Black,
-            contentColor = androidx.compose.ui.graphics.Color.White
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Black,
+            contentColor = Color.White
         )
     ) {
         Text(text = text)

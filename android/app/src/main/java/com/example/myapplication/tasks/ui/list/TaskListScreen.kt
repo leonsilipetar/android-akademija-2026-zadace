@@ -1,14 +1,17 @@
 package com.example.myapplication.tasks.ui.list
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Casino
@@ -16,15 +19,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.tasks.model.Task
-import com.example.myapplication.zadaca.components.CustomButton
-import com.example.myapplication.zadaca.components.TitleText
+import com.example.myapplication.tasks.ui.TaskCard
+import com.example.myapplication.tasks.ui.state.BackgroundPreset
+import com.example.myapplication.tasks.ui.components.CustomButton
+import com.example.myapplication.tasks.ui.components.TitleText
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -34,6 +42,8 @@ fun TaskListScreen(
     onAddClick: () -> Unit,
     onNoteClick: (String) -> Unit,
     onDeleteConfirm: (String) -> Unit,
+    onBackgroundChange: (String) -> Unit,
+    isDark: Boolean,
     onRandomPick: (String) -> Unit,
     onLogout: () -> Unit
 ) {
@@ -41,6 +51,8 @@ fun TaskListScreen(
     var selectedCategory by remember { mutableStateOf("All") }
     var taskToDelete by remember { mutableStateOf<Task?>(null) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     val categories = listOf("All") + tasks.map { it.category }.distinct().sorted()
 
@@ -49,7 +61,11 @@ fun TaskListScreen(
         (it.title.contains(query, ignoreCase = true) || it.body.contains(query, ignoreCase = true))
     }
 
+    val textColor = if (isDark) Color.White else Color.DarkGray
+    val subtitleColor = if (isDark) Color.LightGray else Color.Gray
+
     Scaffold(
+        containerColor = Color.Transparent,
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
                 FloatingActionButton(
@@ -78,36 +94,67 @@ fun TaskListScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TitleText("MemoBoard")
-                
-                Text(
-                    text = username ?: "Guest",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Gray,
-                    modifier = Modifier
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onLongPress = { showLogoutDialog = true }
-                            )
-                        }
-                        .padding(8.dp)
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
+                TitleText("MemoBoard", textColor)
+                Box {
+                    Text(
+                        text = username ?: "Guest",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = textColor,
+                        modifier = Modifier
+                            .clickable { showMenu = true }
+                            .padding(8.dp)
+                    )
 
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Settings") },
+                            onClick = {
+                                showMenu = false
+                                showSettingsDialog = true
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Logout") },
+                            onClick = {
+                                showMenu = false
+                                showLogoutDialog = true
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
             TextField(
                 value = query,
                 onValueChange = { query = it },
-                placeholder = { Text("Search tasks...") },
-                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search tasks...", color = textColor.copy(alpha = 0.5f)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        width = 1.dp,
+                        color = textColor.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(16.dp)
+                    ),
                 shape = RoundedCornerShape(16.dp),
                 colors = TextFieldDefaults.colors(
+                    focusedTextColor = textColor,
+                    unfocusedTextColor = textColor,
+
+                    focusedContainerColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.04f),
+                    unfocusedContainerColor = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.02f),
+
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    errorIndicatorColor = Color.Transparent
                 )
             )
+
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -116,19 +163,44 @@ fun TaskListScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(categories) { category ->
+                    val isSelected = selectedCategory == category
+
                     FilterChip(
-                        selected = selectedCategory == category,
+                        selected = isSelected,
                         onClick = { selectedCategory = category },
-                        label = { Text(category) }
+                        label = {
+                            Text(
+                                text = category,
+                                color = if (isSelected) {
+                                    if (isDark) Color.Black else Color.White
+                                } else {
+                                    textColor.copy(alpha = 0.7f)
+                                },
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = if (isDark) Color.White else Color(0xFF1C1B1F),
+                            containerColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.03f)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = textColor.copy(alpha = 0.2f),
+                            selectedBorderColor = Color.Transparent,
+                            borderWidth = 1.dp,
+                            selectedBorderWidth = 0.dp
+                        )
                     )
                 }
             }
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
             if (filteredItems.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No tasks found", color = Color.Gray)
+                    Text("No tasks found", color = textColor)
                 }
             } else {
                 LazyVerticalStaggeredGrid(
@@ -138,8 +210,8 @@ fun TaskListScreen(
                     verticalItemSpacing = 8.dp
                 ) {
                     items(filteredItems) { task ->
-                        StickyNoteCard(
-                            task = task,
+                        TaskCard(
+                            data = task,
                             onClick = { onNoteClick(task.id) },
                             onLongClick = { taskToDelete = task }
                         )
@@ -147,6 +219,64 @@ fun TaskListScreen(
                 }
             }
         }
+    }
+
+    if (showSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { showSettingsDialog = false },
+            title = { Text("Choose Background") },
+            text = {
+                Column {
+                    Text("Select a color preset or board style:", modifier = Modifier.padding(bottom = 12.dp))
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                    ) {
+                        items(BackgroundPreset.allPresets) { preset ->
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, Color.LightGray, CircleShape)
+                                    .clickable {
+                                        onBackgroundChange(preset.id)
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (preset.imageResId != null) {
+                                    Image(
+                                        painter = painterResource(id = preset.imageResId),
+                                        contentDescription = preset.name,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    if (preset.secondaryColor != null) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(
+                                                    Brush.verticalGradient(
+                                                        colors = listOf(preset.primaryColor, preset.secondaryColor)
+                                                    )
+                                                )
+                                        )
+                                        } else {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize().background(preset.primaryColor)
+                                            )
+                                        }
+                                }
+                            }
+                        }
+                    }
+                }
+                   },confirmButton = {
+                       TextButton(onClick = {
+                           showSettingsDialog = false
+                       }) {Text("Done")}
+                   })
     }
 
     if (taskToDelete != null) {
@@ -189,65 +319,5 @@ fun TaskListScreen(
                 }
             }
         )
-    }
-}
-
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-@Composable
-fun StickyNoteCard(
-    task: Task,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
-) {
-    val bgColor = try {
-        Color(android.graphics.Color.parseColor(task.color))
-    } catch (e: Exception) {
-        Color(0xFFFFEB3B) // Default Yellow
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
-        shape = RoundedCornerShape(4.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = task.category,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black.copy(alpha = 0.6f)
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = task.title,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                maxLines = 2,
-                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                color = if (task.isCompleted) Color.Gray else Color.Unspecified
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = task.body,
-                fontSize = 14.sp,
-                maxLines = 6,
-                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                color = if (task.isCompleted) Color.Gray else Color.Unspecified
-            )
-        }
     }
 }
