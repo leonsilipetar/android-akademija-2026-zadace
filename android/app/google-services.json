@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "377894185514",
+    "project_id": "memoboard-fa2ac",
+    "storage_bucket": "memoboard-fa2ac.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:377894185514:android:6992751ba3a2576d73b153",
+        "android_client_info": {
+          "package_name": "com.test.memoboard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWgiAfvy0jY4zM9ky9ysk2PgnMfCY3i9s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -3,14 +3,15 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.example.myapplication"
+    namespace = "com.test.memoboard"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.myapplication"
+        applicationId = "com.test.memoboard"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -41,6 +42,8 @@ android {
 }
 
 dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.14.0"))
+    implementation("com.google.firebase:firebase-analytics")
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.datastore.core)
